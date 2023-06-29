@@ -8,6 +8,7 @@ import time
 import webbrowser
 from contextlib import nullcontext
 from typing import TYPE_CHECKING, Any, Awaitable, Callable, Optional, Tuple, Union
+from fastapi.applications import AppType
 
 from starlette.middleware import Middleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -90,11 +91,11 @@ def schedule_browser(host: str, port: int) -> Tuple[threading.Thread, threading.
     return thread, cancel
 
 
-def set_storage_secret(storage_secret: Optional[str] = None) -> None:
+def set_storage_secret(app: AppType, storage_secret: Optional[str] = None) -> None:
     """Set storage_secret for ui.run() and run_with."""
-    if any(m.cls == SessionMiddleware for m in globals.app.user_middleware):
+    if any(m.cls == SessionMiddleware for m in app.user_middleware):
         # NOTE not using "add_middleware" because it would be the wrong order
-        globals.app.user_middleware.append(Middleware(RequestTrackingMiddleware))
+        app.user_middleware.append(Middleware(RequestTrackingMiddleware))
     elif storage_secret is not None:
-        globals.app.add_middleware(RequestTrackingMiddleware)
-        globals.app.add_middleware(SessionMiddleware, secret_key=storage_secret)
+        app.add_middleware(RequestTrackingMiddleware)
+        app.add_middleware(SessionMiddleware, secret_key=storage_secret)
